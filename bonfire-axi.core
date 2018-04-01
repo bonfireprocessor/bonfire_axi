@@ -1,0 +1,17 @@
+CAPI=1
+[main]
+name = ::bonfire-axi:0
+depend = ::bonfire-cpu:0 ::bonfire-util:0
+backend = vivado
+simulators=xsim ghdl
+
+[fileset rtl]
+files = wb_db_connect.vhd wishbone_to_axi4.vhd wishbone_to_axi4lite.vhd
+        bonfire_dcache.vhd
+        bonfire_axi_top.vhd
+file_type=vhdlSource
+
+
+
+[simulator]
+toplevel = bonfire_axi_top
