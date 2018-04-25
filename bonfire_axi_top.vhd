@@ -1,21 +1,21 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
+-- Company:
+-- Engineer:
+--
 -- Create Date: 06/04/2017 06:46:08 PM
--- Design Name: 
+-- Design Name:
 -- Module Name: bonfire_axi_top - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
+-- Project Name:
+-- Target Devices:
+-- Tool Versions:
+-- Description:
+--
+-- Dependencies:
+--
 -- Revision:
 -- Revision 0.01 - File Created
 -- Additional Comments:
--- 
+--
 ----------------------------------------------------------------------------------
 
 
@@ -37,10 +37,10 @@ entity bonfire_axi_top is
 generic(
       DBUS_RMW: boolean:=false;
       DIVIDER_EN: boolean:=true;
- 
+
       MUL_ARCH: string:="spartandsp";
       START_ADDR: std_logic_vector(31 downto 0):=X"C0000000";
-      
+
       REG_RAM_STYLE : string := "block";
       CACHE_SIZE_WORDS : natural := 2048;
       CACHE_LINE_SIZE_WORDS : natural := 8;
@@ -48,14 +48,14 @@ generic(
       BRAM_ADR_BASE : std_logic_vector(7 downto 0) := X"C0";
       ENABLE_TIMER : boolean := true;
       TIMER_XLEN : natural := 32;
-      
+
       -- Data Cache
-      
+
       USE_DCACHE : boolean := true;
       DCACHE_LINE_SIZE : natural :=8; -- Line size in MASTER_DATA_WIDTH  words
       DCACHE_SIZE : natural :=2048; -- Cache Size in MASTER_DATA_WIDTH Bit words
       DCACHE_MASTER_WIDTH: natural := 32;
-      
+
       -- Axi parameters
       data_length : natural :=32;
       id_length : natural := 4
@@ -63,9 +63,9 @@ generic(
 Port (
     clk_i: in std_logic;
     rst_i: in std_logic;
-    
+
     --irq_i: in std_logic_vector(7 downto 0);
-    
+
     ext_irq_i  : in std_logic;
     lirq6_i : in std_logic;
     lirq5_i : in std_logic;
@@ -74,25 +74,25 @@ Port (
     lirq2_i : in std_logic;
     lirq1_i : in std_logic;
     lirq0_i : in std_logic;
-   
-    
-    
+
+
+
     -- Interface to  dual port Block RAM
     -- Port A R/W, Byte Level Access, for Data
-    
+
     bram_dba_i : in std_logic_vector(31 downto 0);
     bram_dba_o : out std_logic_vector(31 downto 0);
     bram_adra_o : out std_logic_vector(BRAM_PORT_ADR_SIZE-1 downto 0);
     bram_ena_o :  out  STD_LOGIC;
-    bram_wrena_o :out  STD_LOGIC_VECTOR (3 downto 0);  
-    
-    -- Port B Read Only, Word level access, for Code 
+    bram_wrena_o :out  STD_LOGIC_VECTOR (3 downto 0);
+
+    -- Port B Read Only, Word level access, for Code
     bram_dbb_i : in std_logic_vector(31 downto 0);
     bram_adrb_o : out std_logic_vector(BRAM_PORT_ADR_SIZE-1 downto 0);
     bram_enb_o :  out  STD_LOGIC;
-    
-    
-    
+
+
+
     -- Wishbone data bus (only used for data access...)
     -- Adress range 0x40000000-0x7FFFFFFF
     wb_dbus_cyc_o: out std_logic;
@@ -103,9 +103,9 @@ Port (
     wb_dbus_adr_o: out std_logic_vector(31 downto 2);
     wb_dbus_dat_o: out std_logic_vector(31 downto 0);
     wb_dbus_dat_i: in std_logic_vector(31 downto 0);
-      
-      -- AXI Instruction Cache Master 
-              
+
+      -- AXI Instruction Cache Master
+
     M_AXI_IC_AWADDR : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     M_AXI_IC_AWPROT : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
     M_AXI_IC_AWVALID : OUT STD_LOGIC;
@@ -125,7 +125,7 @@ Port (
     M_AXI_IC_RRESP : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     M_AXI_IC_RVALID : IN STD_LOGIC;
     M_AXI_IC_RREADY : OUT STD_LOGIC;
-    
+
     M_AXI_IC_ARID : out STD_LOGIC_VECTOR ( id_length-1 downto 0 );
     M_AXI_IC_ARLEN : out STD_LOGIC_VECTOR ( 7 downto 0 );
     M_AXI_IC_ARSIZE : out STD_LOGIC_VECTOR ( 2 downto 0 );
@@ -134,7 +134,7 @@ Port (
     M_AXI_IC_ARCACHE : out STD_LOGIC_VECTOR ( 3 downto 0 );
     M_AXI_IC_RID : in STD_LOGIC_VECTOR ( id_length-1 downto 0 );
     M_AXI_IC_RLAST : in STD_LOGIC;
-    
+
     M_AXI_IC_AWID : out STD_LOGIC_VECTOR ( id_length-1 downto 0 );
     M_AXI_IC_AWLEN : out STD_LOGIC_VECTOR ( 7 downto 0 );
     M_AXI_IC_AWSIZE : out STD_LOGIC_VECTOR ( 2 downto 0 );
@@ -142,11 +142,11 @@ Port (
     M_AXI_IC_AWLOCK : out STD_LOGIC;
     M_AXI_IC_WLAST : out STD_LOGIC;
     M_AXI_IC_AWCACHE : out STD_LOGIC_VECTOR ( 3 downto 0 );
-    
- 
-    
-    -- AXI DC Master, Address Range: 0x00000000-0x3FFFFFFF 
-    
+
+
+
+    -- AXI DC Master, Address Range: 0x00000000-0x3FFFFFFF
+
     M_AXI_DC_AWADDR : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     M_AXI_DC_AWPROT : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
     M_AXI_DC_AWVALID : OUT STD_LOGIC;
@@ -166,7 +166,7 @@ Port (
     M_AXI_DC_RRESP : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     M_AXI_DC_RVALID : IN STD_LOGIC;
     M_AXI_DC_RREADY : OUT STD_LOGIC;
-    
+
     M_AXI_DC_ARID : out STD_LOGIC_VECTOR ( id_length-1 downto 0 );
     M_AXI_DC_ARLEN : out STD_LOGIC_VECTOR ( 7 downto 0 );
     M_AXI_DC_ARSIZE : out STD_LOGIC_VECTOR ( 2 downto 0 );
@@ -175,7 +175,7 @@ Port (
     M_AXI_DC_ARCACHE : out STD_LOGIC_VECTOR ( 3 downto 0 );
     M_AXI_DC_RID : in STD_LOGIC_VECTOR ( id_length-1 downto 0 );
     M_AXI_DC_RLAST : in STD_LOGIC;
-    
+
     M_AXI_DC_AWID : out STD_LOGIC_VECTOR ( id_length-1 downto 0 );
     M_AXI_DC_AWLEN : out STD_LOGIC_VECTOR ( 7 downto 0 );
     M_AXI_DC_AWSIZE : out STD_LOGIC_VECTOR ( 2 downto 0 );
@@ -183,10 +183,10 @@ Port (
     M_AXI_DC_AWLOCK : out STD_LOGIC;
     M_AXI_DC_WLAST : out STD_LOGIC;
     M_AXI_DC_AWCACHE : out STD_LOGIC_VECTOR ( 3 downto 0 );
-    
-   
-    
-    -- AXI4 Lite Data Interface 
+
+
+
+    -- AXI4 Lite Data Interface
     M_AXI_DP_AWADDR : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     M_AXI_DP_AWPROT : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
     M_AXI_DP_AWVALID : OUT STD_LOGIC;
@@ -206,11 +206,11 @@ Port (
     M_AXI_DP_RRESP : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     M_AXI_DP_RVALID : IN STD_LOGIC;
     M_AXI_DP_RREADY : OUT STD_LOGIC
-    
-   
-       
 
- ); 
+
+
+
+ );
 end bonfire_axi_top;
 
 architecture Behavioral of bonfire_axi_top is
@@ -308,12 +308,12 @@ ATTRIBUTE X_INTERFACE_INFO of  clk_i : SIGNAL is "xilinx.com:signal:clock:1.0 cl
   ATTRIBUTE X_INTERFACE_INFO OF M_AXI_DP_RRESP: SIGNAL IS "xilinx.com:interface:aximm:1.0 M_AXI_DP RRESP";
   ATTRIBUTE X_INTERFACE_INFO OF M_AXI_DP_RVALID: SIGNAL IS "xilinx.com:interface:aximm:1.0 M_AXI_DP RVALID";
   ATTRIBUTE X_INTERFACE_INFO OF M_AXI_DP_RREADY: SIGNAL IS "xilinx.com:interface:aximm:1.0 M_AXI_DP RREADY";
- 
- 
+
+
   ATTRIBUTE X_INTERFACE_PARAMETER : STRING;
   ATTRIBUTE X_INTERFACE_PARAMETER of clk_i : SIGNAL is "ASSOCIATED_BUSIF M_AXI_IC:M_AXI_DC:M_AXI_DP:WB_DB:BRAM_A:BRAM_B";
   --ATTRIBUTE X_INTERFACE_PARAMETER of rst_i : SIGNAL is "ASSOCIATED_BUSIF M_AXI_IC:M_AXI_DC:M_AXI_DP:WB_DB:BRAM_A:BRAM_B";
-  
+
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_cyc_o: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0 WB_DB wb_dbus_cyc_o";
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_stb_o: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0 WB_DB wb_dbus_stb_o";
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_we_o: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0  WB_DB wb_dbus_we_o";
@@ -322,20 +322,20 @@ ATTRIBUTE X_INTERFACE_INFO of  clk_i : SIGNAL is "xilinx.com:signal:clock:1.0 cl
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_adr_o: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0 WB_DB wb_dbus_adr_o";
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_dat_o: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0 WB_DB wb_dbus_dat_o";
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_dat_i: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0 WB_DB wb_dbus_dat_i";
-  
+
   ATTRIBUTE X_INTERFACE_INFO OF bram_ena_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A EN";
   ATTRIBUTE X_INTERFACE_INFO OF bram_dba_i: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A DOUT";
   ATTRIBUTE X_INTERFACE_INFO OF bram_dba_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A DIN";
   ATTRIBUTE X_INTERFACE_INFO OF bram_wrena_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A WE";
   ATTRIBUTE X_INTERFACE_INFO OF bram_adra_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A ADDR";
-  
-  
+
+
   ATTRIBUTE X_INTERFACE_INFO OF bram_enb_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_B EN";
   ATTRIBUTE X_INTERFACE_INFO OF bram_dbb_i: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_B DOUT";
   ATTRIBUTE X_INTERFACE_INFO OF bram_adrb_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_B ADDR";
 
- 
-  
+
+
 
 -- Instruction Bus Master
 signal ibus_cyc_o:  std_logic;
@@ -347,7 +347,7 @@ signal ibus_adr_o:  std_logic_vector(29 downto 0);
 signal ibus_dat_i:  std_logic_vector(31 downto 0);
 
 
-attribute mark_debug : string; 
+attribute mark_debug : string;
 
 
 
@@ -396,14 +396,14 @@ begin
 wb_dbus_adr_o <= "00" & wb_dbus_adr_o_temp;
 
 
- irq(0)<=  ext_irq_i; 
+ irq(0)<=  ext_irq_i;
  irq(1) <=  lirq0_i;
  irq(2) <=  lirq1_i;
- irq(3) <=  lirq2_i;  
- irq(4) <=  lirq3_i; 
+ irq(3) <=  lirq2_i;
+ irq(4) <=  lirq3_i;
  irq(5) <=  lirq4_i;
  irq(6) <=  lirq5_i;
- irq(7) <=  lirq6_i;  
+ irq(7) <=  lirq6_i;
 
 cpu_top: entity work.bonfire_cpu_top
        generic map (
@@ -416,11 +416,11 @@ cpu_top: entity work.bonfire_cpu_top
          BRAM_ADR_BASE=>BRAM_ADR_BASE,
          ENABLE_TIMER=>ENABLE_TIMER
        )
-  
+
        PORT MAP(
         clk_i => clk_i,
         rst_i => rst_i,
-  
+
         bram_dba_i => bram_dba_i,
         bram_dba_o => bram_dba_o,
         bram_adra_o => bram_adra_o,
@@ -429,7 +429,7 @@ cpu_top: entity work.bonfire_cpu_top
         bram_dbb_i =>  bram_dbb_i,
         bram_adrb_o => bram_adrb_o,
         bram_enb_o =>  bram_enb_o,
-        
+
         wb_ibus_cyc_o => ibus_cyc_o ,
         wb_ibus_stb_o => ibus_stb_o,
         wb_ibus_cti_o => ibus_cti_o,
@@ -437,7 +437,7 @@ cpu_top: entity work.bonfire_cpu_top
         wb_ibus_ack_i => ibus_ack_i,
         wb_ibus_adr_o => ibus_adr_o,
         wb_ibus_dat_i => ibus_dat_i,
-       
+
         wb_dbus_cyc_o => dbus_cyc_o,
         wb_dbus_stb_o => dbus_stb_o,
         wb_dbus_we_o =>  dbus_we_o,
@@ -446,7 +446,7 @@ cpu_top: entity work.bonfire_cpu_top
         wb_dbus_adr_o => dbus_adr_o,
         wb_dbus_dat_o => dbus_dat_o,
         wb_dbus_dat_i => dbus_dat_i,
-        
+
         irq_i => irq
       );
 
@@ -454,7 +454,7 @@ cpu_top: entity work.bonfire_cpu_top
 inst_arbiter:  entity work.wb_db_connect PORT MAP(
            clk_i => clk_i,
            rst_i => rst_i,
-         
+
            s0_cyc_i => dbus_cyc_o,
            s0_stb_i => dbus_stb_o,
            s0_we_i =>  dbus_we_o,
@@ -465,9 +465,9 @@ inst_arbiter:  entity work.wb_db_connect PORT MAP(
            s0_adr_i => dbus_adr_o,
            s0_dat_i => dbus_dat_o,
            s0_dat_o => dbus_dat_i,
-          
-          
-       -- Interface to Data cache Address Range: 0x00000000-0x3FFFFFFF 
+
+
+       -- Interface to Data cache Address Range: 0x00000000-0x3FFFFFFF
            m0_cyc_o => dcm_cyc,
            m0_stb_o => dcm_stb,
            m0_we_o =>  dcm_we,
@@ -478,7 +478,7 @@ inst_arbiter:  entity work.wb_db_connect PORT MAP(
            m0_adr_o => dcm_adr,
            m0_dat_o => dcm_dat_wr,
            m0_dat_i => dcm_dat_rd,
-           
+
         -- Interace to external wishbone port Address range 0x40000000-0x7FFFFFFF
            m1_cyc_o => wb_dbus_cyc_o,
            m1_stb_o => wb_dbus_stb_o,
@@ -490,8 +490,8 @@ inst_arbiter:  entity work.wb_db_connect PORT MAP(
            m1_adr_o => wb_dbus_adr_o_temp,
            m1_dat_o => wb_dbus_dat_o,
            m1_dat_i => wb_dbus_dat_i,
-           
-        -- Interface to AXI4 Lite Data Port Address range 0x80000000-0xB0000000  
+
+        -- Interface to AXI4 Lite Data Port Address range 0x80000000-0xB0000000
            m2_cyc_o => axi_dp_cyc,
            m2_stb_o => axi_dp_stb,
            m2_we_o =>  axi_dp_we,
@@ -503,13 +503,13 @@ inst_arbiter:  entity work.wb_db_connect PORT MAP(
            m2_dat_o => axi_dp_dat_wr,
            m2_dat_i => axi_dp_dat_rd
        );
- 
- 
+
+
 
 axi_bridge_ic: entity work.wishbone_to_axi4
     generic map (
       BURST_LENGTH => CACHE_LINE_SIZE_WORDS
-      
+
      )
      port map (
        clk_i => clk_i,
@@ -523,7 +523,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        wbs_dat_i => (others=>'0'),
        wbs_dat_o => ibus_dat_i,
        wbs_cti_i => ibus_cti_o,
-       
+
        M_AXI_AWADDR => M_AXI_IC_AWADDR,
        M_AXI_AWPROT => M_AXI_IC_AWPROT,
        M_AXI_AWVALID => M_AXI_IC_AWVALID,
@@ -543,7 +543,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        M_AXI_RRESP => M_AXI_IC_RRESP,
        M_AXI_RVALID => M_AXI_IC_RVALID,
        M_AXI_RREADY => M_AXI_IC_RREADY,
-       
+
        M_AXI_ARID => M_AXI_IC_ARID,
        M_AXI_ARLEN => M_AXI_IC_ARLEN,
        M_AXI_ARSIZE => M_AXI_IC_ARSIZE,
@@ -552,7 +552,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        M_AXI_ARCACHE => M_AXI_IC_ARCACHE,
        M_AXI_RID => M_AXI_IC_RID,
        M_AXI_RLAST => M_AXI_IC_RLAST,
-       
+
        M_AXI_AWID => M_AXI_IC_AWID,
        M_AXI_AWLEN => M_AXI_IC_AWLEN,
        M_AXI_AWSIZE => M_AXI_IC_AWSIZE,
@@ -560,19 +560,20 @@ axi_bridge_ic: entity work.wishbone_to_axi4
         M_AXI_AWCACHE => M_AXI_IC_AWCACHE,
        M_AXI_AWLOCK => M_AXI_IC_AWLOCK,
        M_AXI_WLAST => M_AXI_IC_WLAST
-       
+
  );
- 
- 
+
+
  dcache: if USE_DCACHE  generate
- 
+
  inst_dcache: entity work.bonfire_dcache
- 
+
  generic  map (
        MASTER_DATA_WIDTH => DCACHE_MASTER_WIDTH,
        LINE_SIZE => DCACHE_LINE_SIZE,
        CACHE_SIZE => DCACHE_SIZE,
-       ADDRESS_BITS => dcm_adr'length
+       ADDRESS_BITS => dcm_adr'length,
+       DEVICE_FAMILY => "ARTIX7"
      )
      port map (clk_i     => clk_i,
                rst_i     => rst_i,
@@ -584,7 +585,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
                wbs_adr_i => dcm_adr,
                wbs_dat_o => dcm_dat_rd,
                wbs_dat_i => dcm_dat_wr,
-               
+
                wbm_cyc_o => axi_dc_cyc,
                wbm_stb_o => axi_dc_stb,
                wbm_we_o  => axi_dc_we,
@@ -595,10 +596,10 @@ axi_bridge_ic: entity work.wishbone_to_axi4
                wbm_adr_o => axi_dc_adr,
                wbm_dat_i => axi_dc_dat_rd,
                wbm_dat_o => axi_dc_dat_wr);
- 
+
  end generate;
- 
- 
+
+
  axi_bridge_dc: entity work.wishbone_to_axi4
      generic map (
        wb_adr_high => 29,
@@ -606,7 +607,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        data_length=>DCACHE_MASTER_WIDTH
      )
      port map (
-     
+
        clk_i => clk_i,
        rst_i => rst_i,
        wbs_cyc_i => axi_dc_cyc,
@@ -618,7 +619,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        wbs_dat_i => axi_dc_dat_wr,
        wbs_dat_o => axi_dc_dat_rd,
        wbs_cti_i => axi_dc_cti,
-       
+
        M_AXI_AWADDR => M_AXI_DC_AWADDR,
        M_AXI_AWPROT => M_AXI_DC_AWPROT,
        M_AXI_AWVALID => M_AXI_DC_AWVALID,
@@ -638,7 +639,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        M_AXI_RRESP => M_AXI_DC_RRESP,
        M_AXI_RVALID => M_AXI_DC_RVALID,
        M_AXI_RREADY => M_AXI_DC_RREADY,
-       
+
        M_AXI_ARID => M_AXI_DC_ARID,
        M_AXI_ARLEN => M_AXI_DC_ARLEN,
        M_AXI_ARSIZE => M_AXI_DC_ARSIZE,
@@ -647,7 +648,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        M_AXI_ARCACHE => M_AXI_DC_ARCACHE,
        M_AXI_RID => M_AXI_DC_RID,
        M_AXI_RLAST => M_AXI_DC_RLAST,
-       
+
        M_AXI_AWID => M_AXI_DC_AWID,
        M_AXI_AWLEN => M_AXI_DC_AWLEN,
        M_AXI_AWSIZE => M_AXI_DC_AWSIZE,
@@ -656,8 +657,8 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        M_AXI_AWCACHE => M_AXI_DC_AWCACHE,
        M_AXI_WLAST => M_AXI_DC_WLAST
  );
- 
- 
+
+
  axi_bridge_dp: entity work.wishbone_to_axi4lite
     generic map (
        wb_adr_high => 29,
@@ -675,7 +676,7 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        wbs_dat_i => axi_dp_dat_wr,
        wbs_dat_o => axi_dp_dat_rd,
        wbs_cti_i => axi_dp_cti,
-       
+
        M_AXI_AWADDR => M_AXI_DP_AWADDR,
        M_AXI_AWPROT => M_AXI_DP_AWPROT,
        M_AXI_AWVALID => M_AXI_DP_AWVALID,
@@ -696,11 +697,11 @@ axi_bridge_ic: entity work.wishbone_to_axi4
        M_AXI_RVALID => M_AXI_DP_RVALID,
        M_AXI_RREADY => M_AXI_DP_RREADY
  );
- 
- 
-  
- 
-   
+
+
+
+
+
 
 
 
