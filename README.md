@@ -6,7 +6,7 @@ Bonfire Core together with I and D Cache. Designed to work with Xilinx Vivado IP
 ### Toplevel Interfaces
 
 Name   | Description                       |Acc | Address Range
-------- |-----------------------------------|-----------------------
+------- |----------------------------------|----|-------------------
 BRAM_A  | BRAM Port A (Data Port)           |RW  |0xC0000000-0xCFFFFFFF
 BRAM_B  | BRAM Port B (Instruction Port)    |RX  |0xC0000000-0xCFFFFFFF
 M_AXI_IC| AXI4 Instruction Cache Master*    |RX |0x00000000-0xBFFFFFFF
@@ -45,5 +45,3 @@ Restrictions:
 * REG_RAM_STYLE is a string directly passed to the register file as attribute. Refer to Xilinx documentation for RAM inference on restritions.
 
 **All the restrictions are not  explicitly checked and enforced by the code. So expect erratic behavior or at least inefficient implementations when violating this rules.**
-
- 
