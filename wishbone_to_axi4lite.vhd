@@ -85,14 +85,16 @@ type t_axi_state is (axi_idle,axi_write,axi_read);
 
 --registered signals
 signal axi_state : t_axi_state := axi_idle;
-signal wr_valid : std_logic:='0';
+signal wr_taken_reg : std_logic :='0';
+signal aw_taken_reg : std_logic :='0';
 
 --combinatorial signals
 signal wr_avalid : std_logic;
 signal rd_avalid : std_logic;
 signal wbs_ack : std_logic;
 
-signal aw_taken,ar_taken : std_logic;
+signal aw_taken,ar_taken, wr_taken : std_logic;
+signal wr_valid : std_logic;
 
 signal axi_adr_temp : std_logic_vector (31 downto 0);
 
@@ -108,14 +110,19 @@ begin
 
  
   wr_avalid <= wbs_stb_i and wbs_we_i;
-  M_AXI_AWVALID <= wr_avalid when axi_state=axi_idle else '0';
+  M_AXI_AWVALID <= wr_avalid when aw_taken_reg='0' else '0';
   aw_taken <=   wr_avalid and M_AXI_AWREADY; -- When both are 1 then the slave has taken the adddress
   
+  
+  wr_valid <= wr_avalid when wr_taken_reg='0' else '0'; 
+  wr_taken <= wr_valid and M_AXI_WREADY; -- When both are 1 then the slave has taken the write channel
   M_AXI_WVALID  <= wr_valid;
+  
   
   rd_avalid <= wbs_stb_i and not wbs_we_i;
   M_AXI_ARVALID <= rd_avalid when axi_state=axi_idle else '0';
   ar_taken <= rd_avalid and M_AXI_ARREADY; -- When both are 1 then the slave has taken the adddress
+ 
   
   M_AXI_RREADY  <= M_AXI_RVALID;
   
@@ -138,34 +145,51 @@ begin
   
   
   -- Ack wisbone cycle when AXI cycle is finished
-  wbs_ack <= '1' when ((axi_state=axi_write) and M_AXI_WREADY='1') or
+  wbs_ack <= '1' when (axi_state=axi_write) or
                       ((axi_state=axi_read) and M_AXI_RVALID='1')
              else '0';
              
                       
   wbs_ack_o <= wbs_ack;
   
-  process(clk_i) begin
+  process(clk_i) 
+  variable  wr_handshake_complete : std_logic;
+  begin
   
     if rising_edge(clk_i) then
       if rst_i='1' then
-        axi_state<=axi_idle;
-        wr_valid<='0';
+        axi_state <= axi_idle;
+        wr_taken_reg <= '0';
+        aw_taken_reg <= '0';
+  --      wr_valid<='0';
       else
+        
+       
         case axi_state is
         
           when axi_idle =>
-             if ar_taken = '1' then
-               axi_state<=axi_read;
-             elsif aw_taken= '1' then
-               axi_state<=axi_write;
-               wr_valid<='1';
+            if wr_taken='1' then
+               wr_taken_reg <='1';
+            end if;
+            if aw_taken='1' then
+               aw_taken_reg <= '1';
+            end if;
+                 
+            wr_handshake_complete := (wr_taken or wr_taken_reg) and (aw_taken or aw_taken_reg);
+          
+            if ar_taken = '1' then
+              axi_state<=axi_read;
+            elsif wr_handshake_complete= '1' then
+              axi_state<=axi_write;
+        --       wr_valid<='1';
              end if;
              
           when axi_read|axi_write =>
             if wbs_ack='1' then
               axi_state<=axi_idle;
-              wr_valid<='0';
+              wr_taken_reg <= '0';
+              aw_taken_reg <= '0';
+    --          wr_valid<='0';
             end if;
             
         end case;
