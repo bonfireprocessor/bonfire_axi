@@ -115,6 +115,7 @@ subtype t_axlen is std_logic_vector(2 downto 0);
 signal axi_state : t_axi_state := axi_idle;
 signal wr_taken_reg : std_logic :='0';
 signal aw_taken_reg : std_logic :='0';
+signal in_burst : std_logic :='0';
 
 --combinatorial signals
 signal wr_avalid : std_logic;
@@ -123,8 +124,9 @@ signal wbs_ack : std_logic;
 
 signal aw_taken,ar_taken, wr_taken : std_logic;
 signal wr_valid : std_logic;
+signal wr_handshake_complete : std_logic;
 
-signal in_burst : std_logic :='0';
+
 
 signal axi_adr_temp : std_logic_vector (M_AXI_AWADDR'range);
 
@@ -174,8 +176,11 @@ begin
   M_AXI_AWVALID <= wr_avalid when aw_taken_reg='0' else '0';
   aw_taken <=   wr_avalid and M_AXI_AWREADY; -- When both are 1 then the slave has taken the adddress
   
-  wr_valid <= wr_avalid when wr_taken_reg='0' else '0'; 
+  wr_valid <= wr_avalid when wr_taken_reg='0'  else '0'; 
   wr_taken <= wr_valid and M_AXI_WREADY; -- When both are 1 then the slave has taken the write channel
+
+  wr_handshake_complete <= (wr_taken or wr_taken_reg) and (aw_taken or aw_taken_reg);
+
   M_AXI_WVALID  <= wr_valid;
   M_AXI_WLAST <= '1' when  axi_state=axi_write and (wbs_cti_i="000" or wbs_cti_i="111") else '0'; 
   
@@ -223,14 +228,13 @@ begin
   end process;
   
   process(clk_i) 
-  variable  wr_handshake_complete : std_logic;
   begin
  
   
     if rising_edge(clk_i) then
+      wr_taken_reg <= '0';
       if rst_i='1' then
         axi_state<=axi_idle;
-        wr_taken_reg <= '0';
         aw_taken_reg <= '0';
         in_burst<='0';
       else
@@ -244,20 +248,18 @@ begin
                aw_taken_reg <= '1';
              end if;
  
-             wr_handshake_complete := (wr_taken or wr_taken_reg) and (aw_taken or aw_taken_reg);
-
              if ar_taken = '1' then
                axi_state<=axi_read;
              elsif wr_handshake_complete = '1' then
-               axi_state<=axi_write;
-               
+               axi_state<=axi_write;  
              end if;
-             if ar_taken='1' or aw_taken='1' then
+             
+             if ar_taken='1' or wr_handshake_complete='1' then
                if wbs_cti_i="010" then
                  in_burst<='1';
                else
                  in_burst<='0';
-               end if;
+                end if;
              end if;
              
           when axi_read=>
@@ -266,6 +268,7 @@ begin
                 axi_state<=axi_idle;
                 wr_taken_reg <= '0';
                 aw_taken_reg <= '0';
+                in_burst <= '0';
               end if;
             end if;    
                     
@@ -275,6 +278,7 @@ begin
                 axi_state<=axi_idle;
                 wr_taken_reg <= '0';
                 aw_taken_reg <= '0';
+                in_burst <= '0';
               end if;
             end if;
             
