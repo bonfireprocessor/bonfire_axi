@@ -161,7 +161,6 @@ begin
         axi_state <= axi_idle;
         wr_taken_reg <= '0';
         aw_taken_reg <= '0';
-  --      wr_valid<='0';
       else
         
        
@@ -181,7 +180,6 @@ begin
               axi_state<=axi_read;
             elsif wr_handshake_complete= '1' then
               axi_state<=axi_write;
-        --       wr_valid<='1';
              end if;
              
           when axi_read|axi_write =>
@@ -189,7 +187,6 @@ begin
               axi_state<=axi_idle;
               wr_taken_reg <= '0';
               aw_taken_reg <= '0';
-    --          wr_valid<='0';
             end if;
             
         end case;

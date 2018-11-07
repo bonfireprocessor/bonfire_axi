@@ -113,14 +113,16 @@ subtype t_axlen is std_logic_vector(2 downto 0);
 
 --registered signals
 signal axi_state : t_axi_state := axi_idle;
-signal wr_valid : std_logic:='0';
+signal wr_taken_reg : std_logic :='0';
+signal aw_taken_reg : std_logic :='0';
 
 --combinatorial signals
 signal wr_avalid : std_logic;
 signal rd_avalid : std_logic;
 signal wbs_ack : std_logic;
 
-signal aw_taken,ar_taken : std_logic;
+signal aw_taken,ar_taken, wr_taken : std_logic;
+signal wr_valid : std_logic;
 
 signal in_burst : std_logic :='0';
 
@@ -161,8 +163,7 @@ begin
   M_AXI_AWLOCK <='0';
   M_AXI_AWSIZE<=get_AXSIZE(data_length); 
   M_AXI_ARSIZE<=get_AXSIZE(data_length); 
-  --M_AXI_ARCACHE<="0000";
-  --M_AXI_AWCACHE<="0000";  
+   
   M_AXI_ARCACHE<="1111";
   M_AXI_AWCACHE<="1111";  
   M_AXI_AWBURST<="01";
@@ -170,11 +171,13 @@ begin
 
  
   wr_avalid <= wbs_stb_i and wbs_we_i;
-  M_AXI_AWVALID <= wr_avalid when axi_state=axi_idle else '0';
+  M_AXI_AWVALID <= wr_avalid when aw_taken_reg='0' else '0';
   aw_taken <=   wr_avalid and M_AXI_AWREADY; -- When both are 1 then the slave has taken the adddress
   
+  wr_valid <= wr_avalid when wr_taken_reg='0' else '0'; 
+  wr_taken <= wr_valid and M_AXI_WREADY; -- When both are 1 then the slave has taken the write channel
   M_AXI_WVALID  <= wr_valid;
-  M_AXI_WLAST <= '1' when  wr_valid='1' and (wbs_cti_i="000" or wbs_cti_i="111") else '0'; 
+  M_AXI_WLAST <= '1' when  axi_state=axi_write and (wbs_cti_i="000" or wbs_cti_i="111") else '0'; 
   
   rd_avalid <= wbs_stb_i and not wbs_we_i;
   M_AXI_ARVALID <= rd_avalid when axi_state=axi_idle else '0';
@@ -219,29 +222,41 @@ begin
   
   end process;
   
-  process(clk_i) begin
+  process(clk_i) 
+  variable  wr_handshake_complete : std_logic;
+  begin
  
   
     if rising_edge(clk_i) then
       if rst_i='1' then
         axi_state<=axi_idle;
-        wr_valid<='0';
+        wr_taken_reg <= '0';
+        aw_taken_reg <= '0';
         in_burst<='0';
       else
         case axi_state is
         
           when axi_idle =>
+             if wr_taken='1' then
+               wr_taken_reg <='1';
+             end if;
+             if aw_taken='1' then
+               aw_taken_reg <= '1';
+             end if;
+ 
+             wr_handshake_complete := (wr_taken or wr_taken_reg) and (aw_taken or aw_taken_reg);
+
              if ar_taken = '1' then
                axi_state<=axi_read;
-             elsif aw_taken= '1' then
+             elsif wr_handshake_complete = '1' then
                axi_state<=axi_write;
-               wr_valid<='1';
+               
              end if;
              if ar_taken='1' or aw_taken='1' then
                if wbs_cti_i="010" then
                  in_burst<='1';
                else
-                in_burst<='0';
+                 in_burst<='0';
                end if;
              end if;
              
@@ -249,6 +264,8 @@ begin
             if wbs_ack='1' then
               if in_burst='0' or (in_burst='1' and M_AXI_RLAST='1') then
                 axi_state<=axi_idle;
+                wr_taken_reg <= '0';
+                aw_taken_reg <= '0';
               end if;
             end if;    
                     
@@ -256,7 +273,8 @@ begin
             if wbs_ack='1' then
               if in_burst='0' or (in_burst='1' and wbs_cti_i="111") then 
                 axi_state<=axi_idle;
-                wr_valid<='0';
+                wr_taken_reg <= '0';
+                aw_taken_reg <= '0';
               end if;
             end if;
             
