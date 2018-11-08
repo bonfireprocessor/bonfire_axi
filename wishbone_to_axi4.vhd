@@ -118,7 +118,7 @@ signal aw_taken_reg : std_logic :='0';
 signal in_burst : std_logic :='0';
 
 --combinatorial signals
-signal wr_avalid : std_logic;
+signal wr_enable : std_logic;
 signal rd_avalid : std_logic;
 signal wbs_ack : std_logic;
 
@@ -172,17 +172,17 @@ begin
   M_AXI_ARBURST<="01";
 
  
-  wr_avalid <= wbs_stb_i and wbs_we_i;
-  M_AXI_AWVALID <= wr_avalid when aw_taken_reg='0' else '0';
-  aw_taken <=   wr_avalid and M_AXI_AWREADY; -- When both are 1 then the slave has taken the adddress
+  wr_enable <= wbs_stb_i and wbs_we_i;
+  M_AXI_AWVALID <= wr_enable when aw_taken_reg='0' else '0';
+  aw_taken <=   wr_enable and M_AXI_AWREADY; -- When both are 1 then the slave has taken the adddress
   
-  wr_valid <= wr_avalid when wr_taken_reg='0'  else '0'; 
+  wr_valid <= wr_enable when wr_taken_reg='0'  else '0'; 
   wr_taken <= wr_valid and M_AXI_WREADY; -- When both are 1 then the slave has taken the write channel
 
   wr_handshake_complete <= (wr_taken or wr_taken_reg) and (aw_taken or aw_taken_reg);
 
   M_AXI_WVALID  <= wr_valid;
-  M_AXI_WLAST <= '1' when  axi_state=axi_write and (wbs_cti_i="000" or wbs_cti_i="111") else '0'; 
+  M_AXI_WLAST <= wr_valid when  wbs_cti_i="000" or wbs_cti_i="111" else '0'; 
   
   rd_avalid <= wbs_stb_i and not wbs_we_i;
   M_AXI_ARVALID <= rd_avalid when axi_state=axi_idle else '0';
@@ -203,8 +203,8 @@ begin
   wbs_dat_o<=M_AXI_RDATA;
   
   
-  -- Ack wisbone cycle when AXI cycle is finished
-  wbs_ack <= '1' when ((axi_state=axi_write) and M_AXI_WREADY='1') or
+  -- Ack wisbone cycle when AXI channel handshake is finished
+  wbs_ack <= '1' when wr_handshake_complete='1'  or
                       ((axi_state=axi_read) and M_AXI_RVALID='1')
              else '0';
              
@@ -227,12 +227,15 @@ begin
   
   end process;
   
+  
+
+
+  -- AXI State engine 
   process(clk_i) 
   begin
  
-  
     if rising_edge(clk_i) then
-      wr_taken_reg <= '0';
+     
       if rst_i='1' then
         axi_state<=axi_idle;
         aw_taken_reg <= '0';
@@ -251,7 +254,14 @@ begin
              if ar_taken = '1' then
                axi_state<=axi_read;
              elsif wr_handshake_complete = '1' then
-               axi_state<=axi_write;  
+               wr_taken_reg <= '0';   
+               -- If not already acked or start of a burst 
+               -- got to write state. Otherwise we are already finished        
+               if wbs_ack='0' or  wbs_cti_i="010" then  
+                 axi_state<=axi_write;  
+               else 
+                 aw_taken_reg <= '0';  
+               end if;  
              end if;
              
              if ar_taken='1' or wr_handshake_complete='1' then
@@ -265,9 +275,7 @@ begin
           when axi_read=>
             if wbs_ack='1' then
               if in_burst='0' or (in_burst='1' and M_AXI_RLAST='1') then
-                axi_state<=axi_idle;
-                wr_taken_reg <= '0';
-                aw_taken_reg <= '0';
+                axi_state<=axi_idle; 
                 in_burst <= '0';
               end if;
             end if;    
@@ -276,7 +284,6 @@ begin
             if wbs_ack='1' then
               if in_burst='0' or (in_burst='1' and wbs_cti_i="111") then 
                 axi_state<=axi_idle;
-                wr_taken_reg <= '0';
                 aw_taken_reg <= '0';
                 in_burst <= '0';
               end if;
