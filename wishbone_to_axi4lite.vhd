@@ -31,9 +31,11 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
+use work.log2;
+
 entity wishbone_to_axi4lite is
 generic(
-   
+
     data_length : natural :=32;
     wb_adr_high : natural := 31;
     axi_hi_adrs_bits : std_logic_vector (7 downto 0) :=(others=>'0')
@@ -52,9 +54,9 @@ port(
         wbs_dat_i: in std_logic_vector(data_length-1 downto 0);
         wbs_dat_o: out std_logic_vector(data_length-1 downto 0);
         wbs_cti_i: in std_logic_vector(2 downto 0);
-        
+
         -- AXI Master
-         
+
          M_AXI_AWADDR : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
          M_AXI_AWPROT : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
          M_AXI_AWVALID : OUT STD_LOGIC;
@@ -74,125 +76,131 @@ port(
          M_AXI_RRESP : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
          M_AXI_RVALID : IN STD_LOGIC;
          M_AXI_RREADY : OUT STD_LOGIC
-        
-        
+
+
 );
 end wishbone_to_axi4lite;
 
 
 architecture Behavioral of wishbone_to_axi4lite is
-type t_axi_state is (axi_idle,axi_write,axi_read);
 
---registered signals
-signal axi_state : t_axi_state := axi_idle;
-signal wr_taken_reg : std_logic :='0';
-signal aw_taken_reg : std_logic :='0';
-
---combinatorial signals
-signal wr_avalid : std_logic;
-signal rd_avalid : std_logic;
-signal wbs_ack : std_logic;
-
-signal aw_taken,ar_taken, wr_taken : std_logic;
-signal wr_valid : std_logic;
-
-signal axi_adr_temp : std_logic_vector (31 downto 0);
-
+  component wishbone_to_axi4
+  generic (
+    data_length      : natural := 32;
+    id_length        : natural := 4;
+    burst_length     : natural := 8;
+    wb_adr_high      : natural := 31;
+    axi_hi_adrs_bits : std_logic_vector;
+    axi_lite_mode    : boolean := false
+  );
+  port (
+    clk_i         : in  std_logic;
+    rst_i         : in  std_logic;
+    wbs_cyc_i     : in  std_logic;
+    wbs_stb_i     : in  std_logic;
+    wbs_we_i      : in  std_logic;
+    wbs_sel_i     : in  std_logic_vector((data_length/8)-1 downto 0);
+    wbs_ack_o     : out std_logic;
+    wbs_adr_i     : in  std_logic_vector(wb_adr_high downto log2.log2(data_length/8));
+    wbs_dat_i     : in  std_logic_vector(data_length-1 downto 0);
+    wbs_dat_o     : out std_logic_vector(data_length-1 downto 0);
+    wbs_cti_i     : in  std_logic_vector(2 downto 0);
+    M_AXI_AWADDR  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+    M_AXI_AWPROT  : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+    M_AXI_AWVALID : OUT STD_LOGIC;
+    M_AXI_AWREADY : IN  STD_LOGIC;
+    M_AXI_WDATA   : OUT STD_LOGIC_VECTOR(data_length-1 DOWNTO 0);
+    M_AXI_WSTRB   : OUT STD_LOGIC_VECTOR((data_length/8)-1 DOWNTO 0);
+    M_AXI_WVALID  : OUT STD_LOGIC;
+    M_AXI_WREADY  : IN  STD_LOGIC;
+    M_AXI_BRESP   : IN  STD_LOGIC_VECTOR(1 DOWNTO 0);
+    M_AXI_BVALID  : IN  STD_LOGIC;
+    M_AXI_BREADY  : OUT STD_LOGIC;
+    M_AXI_ARADDR  : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+    M_AXI_ARPROT  : OUT STD_LOGIC_VECTOR(2 DOWNTO 0);
+    M_AXI_ARVALID : OUT STD_LOGIC;
+    M_AXI_ARREADY : IN  STD_LOGIC;
+    M_AXI_RDATA   : IN  STD_LOGIC_VECTOR(data_length-1 DOWNTO 0);
+    M_AXI_RRESP   : IN  STD_LOGIC_VECTOR(1 DOWNTO 0);
+    M_AXI_RVALID  : IN  STD_LOGIC;
+    M_AXI_RREADY  : OUT STD_LOGIC;
+    M_AXI_ARID    : out STD_LOGIC_VECTOR ( id_length-1 downto 0 );
+    M_AXI_ARLEN   : out STD_LOGIC_VECTOR ( 7 downto 0 );
+    M_AXI_ARSIZE  : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_ARBURST : out STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_ARLOCK  : out STD_LOGIC;
+    M_AXI_ARCACHE : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_RID     : in  STD_LOGIC_VECTOR ( id_length-1 downto 0 );
+    M_AXI_RLAST   : in  STD_LOGIC;
+    M_AXI_AWID    : out STD_LOGIC_VECTOR ( id_length-1 downto 0 );
+    M_AXI_AWLEN   : out STD_LOGIC_VECTOR ( 7 downto 0 );
+    M_AXI_AWSIZE  : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_AWBURST : out STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_AWLOCK  : out STD_LOGIC;
+    M_AXI_WLAST   : out STD_LOGIC;
+    M_AXI_AWCACHE : out STD_LOGIC_VECTOR ( 3 downto 0 )
+  );
+  end component wishbone_to_axi4;
 
 begin
 
-  
-  M_AXI_AWPROT<="000";
-  M_AXI_ARPROT<="000";
-  
-  M_AXI_BREADY<='1';
+  wishbone_to_axi4_i : wishbone_to_axi4
+  generic map (
+    data_length      => data_length,
 
+    burst_length     => 1,
+    wb_adr_high      => wb_adr_high,
+    axi_hi_adrs_bits => axi_hi_adrs_bits,
+    axi_lite_mode    => true
+  )
+  port map (
+    clk_i         => clk_i,
+    rst_i         => rst_i,
+    wbs_cyc_i     => wbs_cyc_i,
+    wbs_stb_i     => wbs_stb_i,
+    wbs_we_i      => wbs_we_i,
+    wbs_sel_i     => wbs_sel_i,
+    wbs_ack_o     => wbs_ack_o,
+    wbs_adr_i     => wbs_adr_i,
+    wbs_dat_i     => wbs_dat_i,
+    wbs_dat_o     => wbs_dat_o,
+    wbs_cti_i     => wbs_cti_i,
+    M_AXI_AWADDR  => M_AXI_AWADDR,
+    M_AXI_AWPROT  => M_AXI_AWPROT,
+    M_AXI_AWVALID => M_AXI_AWVALID,
+    M_AXI_AWREADY => M_AXI_AWREADY,
+    M_AXI_WDATA   => M_AXI_WDATA,
+    M_AXI_WSTRB   => M_AXI_WSTRB,
+    M_AXI_WVALID  => M_AXI_WVALID,
+    M_AXI_WREADY  => M_AXI_WREADY,
+    M_AXI_BRESP   => M_AXI_BRESP,
+    M_AXI_BVALID  => M_AXI_BVALID,
+    M_AXI_BREADY  => M_AXI_BREADY,
+    M_AXI_ARADDR  => M_AXI_ARADDR,
+    M_AXI_ARPROT  => M_AXI_ARPROT,
+    M_AXI_ARVALID => M_AXI_ARVALID,
+    M_AXI_ARREADY => M_AXI_ARREADY,
+    M_AXI_RDATA   => M_AXI_RDATA,
+    M_AXI_RRESP   => M_AXI_RRESP,
+    M_AXI_RVALID  => M_AXI_RVALID,
+    M_AXI_RREADY  => M_AXI_RREADY,
 
- 
-  wr_avalid <= wbs_stb_i and wbs_we_i;
-  M_AXI_AWVALID <= wr_avalid when aw_taken_reg='0' else '0';
-  aw_taken <=   wr_avalid and M_AXI_AWREADY; -- When both are 1 then the slave has taken the adddress
-  
-  
-  wr_valid <= wr_avalid when wr_taken_reg='0' else '0'; 
-  wr_taken <= wr_valid and M_AXI_WREADY; -- When both are 1 then the slave has taken the write channel
-  M_AXI_WVALID  <= wr_valid;
-  
-  
-  rd_avalid <= wbs_stb_i and not wbs_we_i;
-  M_AXI_ARVALID <= rd_avalid when axi_state=axi_idle else '0';
-  ar_taken <= rd_avalid and M_AXI_ARREADY; -- When both are 1 then the slave has taken the adddress
- 
-  
-  M_AXI_RREADY  <= M_AXI_RVALID;
-  
-  M_AXI_WSTRB<=wbs_sel_i;
-  M_AXI_WDATA <= wbs_dat_i;
-  
-  
-  -- Address length and range adaption
-  
-  axi_adr_temp(wb_adr_high downto 0) <=  wbs_adr_i & "00";
-  -- Fill up AXI address bits wich are "above" the highest wishbone address bits
-  adr_fill: if wb_adr_high<31 generate 
-    axi_adr_temp(axi_adr_temp'high downto wbs_adr_i'high+1) <= axi_hi_adrs_bits(axi_adr_temp'high-wbs_adr_i'high-1 downto 0);
-  end generate;  
-    
-  M_AXI_AWADDR <= axi_adr_temp;
-  M_AXI_ARADDR <= axi_adr_temp;   
-  
-  wbs_dat_o<=M_AXI_RDATA;
-  
-  
-  -- Ack wisbone cycle when AXI cycle is finished
-  wbs_ack <= '1' when (axi_state=axi_write) or
-                      ((axi_state=axi_read) and M_AXI_RVALID='1')
-             else '0';
-             
-                      
-  wbs_ack_o <= wbs_ack;
-  
-  process(clk_i) 
-  variable  wr_handshake_complete : std_logic;
-  begin
-  
-    if rising_edge(clk_i) then
-      if rst_i='1' then
-        axi_state <= axi_idle;
-        wr_taken_reg <= '0';
-        aw_taken_reg <= '0';
-      else
-        
-       
-        case axi_state is
-        
-          when axi_idle =>
-            if wr_taken='1' then
-               wr_taken_reg <='1';
-            end if;
-            if aw_taken='1' then
-               aw_taken_reg <= '1';
-            end if;
-                 
-            wr_handshake_complete := (wr_taken or wr_taken_reg) and (aw_taken or aw_taken_reg);
-          
-            if ar_taken = '1' then
-              axi_state<=axi_read;
-            elsif wr_handshake_complete= '1' then
-              axi_state<=axi_write;
-             end if;
-             
-          when axi_read|axi_write =>
-            if wbs_ack='1' then
-              axi_state<=axi_idle;
-              wr_taken_reg <= '0';
-              aw_taken_reg <= '0';
-            end if;
-            
-        end case;
-      end if;
-    end if;
-  end process;
-  
+    M_AXI_ARID    => open,
+    M_AXI_ARLEN   => open,
+    M_AXI_ARSIZE  => open,
+    M_AXI_ARBURST => open,
+    M_AXI_ARLOCK  => open,
+    M_AXI_ARCACHE => open,
+    M_AXI_RID     => (others=>'0'),
+    M_AXI_RLAST   => '0',
+    M_AXI_AWID    => open,
+    M_AXI_AWLEN   => open,
+    M_AXI_AWSIZE  => open,
+    M_AXI_AWBURST => open,
+    M_AXI_AWLOCK  => open,
+    M_AXI_WLAST   => open,
+    M_AXI_AWCACHE => open
+  );
+
 
 end Behavioral;
