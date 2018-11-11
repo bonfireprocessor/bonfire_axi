@@ -222,17 +222,18 @@ begin
 axi_full: if not axi_lite_mode generate
 
     process(wbs_cti_i,wbs_stb_i,wbs_we_i)
+    variable len : std_logic_vector(M_AXI_AWLEN'range);
     begin
-      M_AXI_AWLEN<=X"00";
-      M_AXI_ARLEN<=X"00";
-
+      
       if wbs_stb_i='1' and wbs_cti_i="010" then
-        if wbs_we_i='1' then
-          M_AXI_AWLEN<=std_logic_vector(to_unsigned(burst_length-1,M_AXI_AWLEN'length));
-        else
-          M_AXI_ARLEN<=std_logic_vector(to_unsigned(burst_length-1,M_AXI_AWLEN'length));
-        end if;
-      end if;
+        len := std_logic_vector(to_unsigned(burst_length-1,len'length));  
+      else
+        len := (others => '0');
+       end if;
+       -- we can always set both outputs, because the bridge will
+       -- only emmit either a read or a write cylce at the time
+       M_AXI_AWLEN<=len;
+       M_AXI_ARLEN<=len;
     end process;
 end generate;
 
