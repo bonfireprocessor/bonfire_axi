@@ -323,17 +323,21 @@ ATTRIBUTE X_INTERFACE_INFO of  clk_i : SIGNAL is "xilinx.com:signal:clock:1.0 cl
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_dat_o: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0 WB_DB wb_dbus_dat_o";
   ATTRIBUTE X_INTERFACE_INFO OF wb_dbus_dat_i: SIGNAL IS "bonfire.eu:wb:Wishbone_master:1.0 WB_DB wb_dbus_dat_i";
 
+  attribute X_INTERFACE_MODE : string;
+  
+
   ATTRIBUTE X_INTERFACE_INFO OF bram_ena_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A EN";
   ATTRIBUTE X_INTERFACE_INFO OF bram_dba_i: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A DOUT";
   ATTRIBUTE X_INTERFACE_INFO OF bram_dba_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A DIN";
   ATTRIBUTE X_INTERFACE_INFO OF bram_wrena_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A WE";
   ATTRIBUTE X_INTERFACE_INFO OF bram_adra_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_A ADDR";
+  attribute X_INTERFACE_MODE of bram_ena_o: signal is "MASTER";
 
 
   ATTRIBUTE X_INTERFACE_INFO OF bram_enb_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_B EN";
   ATTRIBUTE X_INTERFACE_INFO OF bram_dbb_i: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_B DOUT";
   ATTRIBUTE X_INTERFACE_INFO OF bram_adrb_o: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_B ADDR";
-
+  attribute X_INTERFACE_MODE of bram_enb_o: signal is "MASTER";  
 
 
 
