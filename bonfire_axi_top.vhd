@@ -35,10 +35,10 @@ use work.log2;
 
 entity bonfire_axi_top is
 generic(
-      DBUS_RMW: boolean:=false;
-      DIVIDER_EN: boolean:=true;
+      --DBUS_RMW: boolean:=false;
+      --DIVIDER_EN: boolean:=true;
 
-      MUL_ARCH: string:="spartandsp";
+   
       START_ADDR: std_logic_vector(31 downto 0):=X"C0000000";
 
       REG_RAM_STYLE : string := "block";
@@ -48,6 +48,9 @@ generic(
       BRAM_ADR_BASE : std_logic_vector(7 downto 0) := X"C0";
       ENABLE_TIMER : boolean := true;
       TIMER_XLEN : natural := 32;
+      BRANCH_PREDICTOR : boolean := true;
+      M_EXTENSION: boolean:=true;
+      
 
       -- Data Cache
 
@@ -411,14 +414,16 @@ wb_dbus_adr_o <= "00" & wb_dbus_adr_o_temp;
 
 cpu_top: entity work.bonfire_cpu_top
        generic map (
-         MUL_ARCH => MUL_ARCH,
+        
          REG_RAM_STYLE => REG_RAM_STYLE,
          START_ADDR => START_ADDR(31 downto 2),
          CACHE_LINE_SIZE_WORDS =>CACHE_LINE_SIZE_WORDS,
          CACHE_SIZE_WORDS=>CACHE_SIZE_WORDS,
          BRAM_PORT_ADR_SIZE=>BRAM_PORT_ADR_SIZE,
          BRAM_ADR_BASE=>BRAM_ADR_BASE,
-         ENABLE_TIMER=>ENABLE_TIMER
+         ENABLE_TIMER=>ENABLE_TIMER,
+         BRANCH_PREDICTOR=>BRANCH_PREDICTOR,
+         M_EXTENSION=>M_EXTENSION
        )
 
        PORT MAP(
