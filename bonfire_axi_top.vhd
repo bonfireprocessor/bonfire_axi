@@ -220,7 +220,17 @@ architecture Behavioral of bonfire_axi_top is
 
 ATTRIBUTE X_INTERFACE_INFO : STRING;
 ATTRIBUTE X_INTERFACE_INFO of  clk_i : SIGNAL is "xilinx.com:signal:clock:1.0 clk_i CLK";
---ATTRIBUTE X_INTERFACE_INFO of  rst_i : SIGNAL is "xilinx.com:signal:reset:1.0 rst_i RESET";
+ATTRIBUTE X_INTERFACE_INFO of  rst_i : SIGNAL is "xilinx.com:signal:reset:1.0 rst_i RESET";
+
+attribute X_INTERFACE_INFO of ext_irq_i : signal is "xilinx.com:signal:interrupt:1.0 ext_irq_i INTERRUPT";
+attribute X_INTERFACE_INFO of lirq6_i : signal is "xilinx.com:signal:interrupt:1.0 lirq6_i INTERRUPT";
+attribute X_INTERFACE_INFO of lirq5_i : signal is "xilinx.com:signal:interrupt:1.0 lirq5_i INTERRUPT";
+attribute X_INTERFACE_INFO of lirq4_i : signal is "xilinx.com:signal:interrupt:1.0 lirq4_i INTERRUPT";
+attribute X_INTERFACE_INFO of lirq3_i : signal is "xilinx.com:signal:interrupt:1.0 lirq3_i INTERRUPT";
+attribute X_INTERFACE_INFO of lirq2_i : signal is "xilinx.com:signal:interrupt:1.0 lirq2_i INTERRUPT";
+attribute X_INTERFACE_INFO of lirq1_i : signal is "xilinx.com:signal:interrupt:1.0 lirq1_i INTERRUPT";
+attribute X_INTERFACE_INFO of lirq0_i : signal is "xilinx.com:signal:interrupt:1.0 lirq0_i INTERRUPT";
+
 
 
 
